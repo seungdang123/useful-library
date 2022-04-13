@@ -1,8 +1,13 @@
 import TypeIt from "typeit-react";
 import styled from "styled-components";
 import { motion, useAnimation } from "framer-motion";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useInView } from "react-intersection-observer";
+import { useRef } from "react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
 
 const Wrapper = styled(motion.div)`
   display: flex;
@@ -127,6 +132,79 @@ export default () => {
     }
   }, [inView]);
 
+  const headerRef = useRef(null);
+  const revealRefs = useRef([]);
+
+  revealRefs.current = [];
+
+  const [background, setBackground] = useState("#000");
+  const sections = [
+    {
+      title: "Title1",
+      subTitle: "Greensock",
+    },
+    {
+      title: "Title2",
+      subTitle: "Scroll Animation",
+    },
+    {
+      title: "Title3",
+      subTitle: "'^'",
+    },
+  ];
+
+  const addToRefs = (el) => {
+    if (el && !revealRefs.current.includes(el)) {
+      revealRefs.current.push(el);
+    }
+
+    console.log(revealRefs.current);
+  };
+
+  const toggleBackground = () => {
+    const color = background !== "#000" ? "#000" : "#222";
+    setBackground(color);
+  };
+
+  useEffect(() => {
+    gsap.to(headerRef.current, {
+      duration: 1,
+      backgroundColor: background,
+      ease: "none",
+    });
+  }, [background]);
+
+  useEffect(() => {
+    gsap.from(headerRef.current, {
+      duration: 1,
+      autoAlpha: 0,
+      ease: "none",
+      delay: 1,
+    });
+
+    revealRefs.current.forEach((el, index) => {
+      gsap.fromTo(
+        el,
+        { autoAlpha: 0 },
+        {
+          x: 0,
+          duration: 1,
+          autoAlpha: 1,
+          scale: 1.2,
+          rotateZ: 3,
+          ease: "none",
+          scrollTrigger: {
+            id: `section-${index + 1}`,
+            trigger: el,
+            start: "top center += 100",
+            toggleActions: "play none none reverse",
+            // markers: true,
+          },
+        }
+      );
+    });
+  }, []);
+
   return (
     <Wrapper>
       <Footer className="Footer">
@@ -220,7 +298,66 @@ export default () => {
           Intersection Observe
         </motion.div>
       </Main>
-      <motion.div style={{ margin: "500px" }}></motion.div>
+      <motion.div
+        ref={headerRef}
+        style={{
+          margin: "500px 0",
+          height: "auto",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexDirection: "column",
+          boxSizing: "border-box",
+        }}
+      >
+        <p
+          style={{
+            fontSize: "30px",
+            margin: "30px 0",
+            fontWeight: "100",
+            letterSpacing: 3,
+          }}
+        >
+          Greensock scroll trigger
+        </p>
+        <button
+          onClick={() => toggleBackground()}
+          style={{
+            borderRadius: "50%",
+            width: "80px",
+            height: "80px",
+            textAlign: "center",
+            backgroundColor: "transparent",
+            color: "#fff",
+            cursor: "pointer",
+          }}
+        >
+          Toggle
+        </button>
+        {sections.map(({ title, subTitle }) => {
+          return (
+            <motion.div
+              key={title}
+              ref={addToRefs}
+              style={{
+                x: "-50vw",
+                height: "150px",
+                width: "30%",
+                margin: "100px 0",
+                border: "1px solid white",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "30px",
+                fontWeight: "100",
+                letterSpacing: 1.5,
+              }}
+            >
+              <h2>{subTitle}</h2>
+            </motion.div>
+          );
+        })}
+      </motion.div>
     </Wrapper>
   );
 };
